@@ -2003,6 +2003,42 @@ pub fn get_fallback_oracle(env: &Env) -> Option<Address> {
     oracle::get_fallback_oracle(env)
 }
 
+pub fn schedule_payout(env: &Env, caller: &Address, round: u32) -> Result<(), CircleError> {
+    pause::when_not_paused(env).map_err(|_| CircleError::ContractPaused)?;
+    let _guard = ReentrancyGuard::new(env).map_err(|_| CircleError::ReentrantCall)?;
+    caller.require_auth();
+    let circle: Circle = env
+        .storage()
+        .instance()
+        .get(&DataKey::Circle)
+        .ok_or(CircleError::NotInitialized)?;
+    let stored_admin: Address = env
+        .storage()
+        .instance()
+        .get(&DataKey::Admin)
+        .ok_or(CircleError::NotInitialized)?;
+    if caller != &circle.organizer && caller != &stored_admin {
+        return Err(CircleError::Unauthorized);
+    }
+    if circle.status != STATUS_ACTIVE {
+        return Err(CircleError::NotActive);
+    }
+    if round != circle.current_round {
+        return Err(CircleError::RoundNotCurrent);
+    }
+    env.storage()
+        .persistent()
+        .set(&DataKey::PayoutScheduled(round), &true);
+    Ok(())
+}
+
+pub fn is_payout_scheduled(env: &Env, round: u32) -> bool {
+    env.storage()
+        .persistent()
+        .get(&DataKey::PayoutScheduled(round))
+        .unwrap_or(false)
+}
+
 /// Cancels the active round auction, refunding the current highest bidder (winner)
 /// and clearing auction state in one atomic sequence.
 ///

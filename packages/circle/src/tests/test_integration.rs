@@ -1,3 +1,6 @@
+#![cfg(test)]
+
+use soroban_sdk::testutils::Address as _;
 use soroban_sdk::{Address, Env, String};
 
 /// Integration test: factory deploys circle -> members join -> contribute -> trigger payout -> fee sent to treasury

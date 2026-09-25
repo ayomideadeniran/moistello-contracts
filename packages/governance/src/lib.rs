@@ -117,12 +117,3 @@ impl Governance {
     pub fn get_deposit(env: Env, id: u64) -> Option<i128> {
         contract::get_deposit(&env, id)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_smoke_compile() {
-        assert!(true);
-    }
-}
